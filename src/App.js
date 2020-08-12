@@ -3,45 +3,79 @@ import Blog from './components/Blog'
 import blogService from './services/blogs'
 import loginService from './services/login'
 import Notification from './components/Notification'
+import Togglable from './components/Togglable'
+import LoginForm from './components/LoginForm'
+import SaveForm from './components/SaveForm'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
   const [kayttajatunnus, setKayttajatunnus] = useState('')
   const [salasanaHash, setSalasanaHash] = useState('')
   const [user, setUser] = useState(null)
-  
-  const [title, setTitle] = useState('')
-  const [author, setAuthor] = useState('')
-  const [url, setUrl] = useState('')
+
 
   const [ message, setMessage] = useState(null)
   const [ errorMessage, setErrorMessage] = useState(null)
 
-  const handleSaveBlog = async (event) => {
-    event.preventDefault()
+  const addBlog = async (newBlog, author, title) => {
     try {
-      const blog = await blogService.create({
-        title, author, url,
-      })
-      
+      const blog = await blogService.create(newBlog)
       setBlogs(blogs.concat(blog))
       setMessage(`Uusi blogi lisättiin: ${author}, ${title}.`)
-      setTitle('')
-      setAuthor('')
-      setUrl('')
-
-    } catch (exception) {
-      setErrorMessage('Blogin lisääminen ei onnistunut. Yritä uudelleen.')
       setTimeout(() => {
         setMessage(null)
       }, 5000)
-      console.log('Virhe!')
+      window.location.reload()
+    }  catch (exception) {
+      setErrorMessage('Blogin lisääminen ei onnistunut. Yritä uudelleen.')
       setTimeout(() => {
         setErrorMessage(null)
       }, 5000)
+      console.log('Virhe!')
+      
     }
-    
   }
+
+  const updateBlog = async (updatedBlog, likes, id) => {
+    try {
+      console.log(id)
+      await blogService.update(id, updatedBlog)
+      setMessage(`Blogilla on nyt tykkäyksiä: ${likes}.`)
+      setTimeout(() => {
+        setMessage(null)
+      }, 5000)
+      window.location.reload()
+      
+    }  catch (exception) {
+      setErrorMessage('Blogin päivittäminen ei onnistunut. Yritä uudelleen.')
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+      console.log('Virhe!')
+    }
+  }
+
+  const deleteBlog = async (id) => {
+    if (window.confirm("Haluatko varmasti poistaa blogin?")) { 
+      
+    
+    try {
+      console.log(id)
+      await blogService.remove(id)
+      setMessage(`Blogin poistaminen onnistui!`)
+      setTimeout(() => {
+        setMessage(null)
+      }, 5000)
+      window.location.reload()
+    }  catch (exception) {
+      setErrorMessage('Blogin poistaminen ei onnistunut. Yritä uudelleen.')
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+      console.log('Virhe!')
+    }
+  }
+}
 
   const handleLogin = async (event) => {
     event.preventDefault()
@@ -87,57 +121,44 @@ const App = () => {
 
 if (user === null) {
   console.log('Returnissa!')
-  console.log(kayttajatunnus)
-  console.log(user)
 
   return (
     <div>
-      <h2>Kirjaudu sisään alla olevalla lomakkeella</h2>
+
       <Notification message = {message} errorMessage={errorMessage}/>
-      <form onSubmit={handleLogin}>
-        <div>Käyttäjätunnus</div>
-        <input type="text" value={kayttajatunnus} name="Username"
-        onChange={({ target }) => setKayttajatunnus(target.value)}
-        />
-        <div>Salasana</div>
-        <input type="text" value={salasanaHash} name="Password"
-        onChange={({ target }) => setSalasanaHash(target.value)}
-        />
-        <button type="submit">Kirjaudu</button>
-      </form>
+    
+      <Togglable buttonLabel='Kirjautumislomake'>
+        <LoginForm kayttajatunnus={kayttajatunnus} salasanaHash={salasanaHash} setKayttajatunnus ={setKayttajatunnus} setSalasanaHash={setSalasanaHash} handleLogin={handleLogin} />
+      </Togglable>
+
     </div>
   )
 }  
 
- return (
+const sortBlogs = blogs.sort((a, b) => b.likes - a.likes)
+
+
+return (
   <div>
     <p>{user.nimi} kirjautuneena palveluun.</p>
-    <button onClick={() => window.localStorage.removeItem('kirjautunutKayttaja')}>
+    <button onClick={() => {
+      window.localStorage.removeItem('kirjautunutKayttaja')
+      window.location.reload()}}>
       Kirjaudu ulos
     </button>
 
     <h2>Blogit</h2>
+
     <Notification message = {message} errorMessage={errorMessage}/>
-    {blogs.map(blog =>
-      <Blog key={blog.id} blog={blog} />
+    
+    {sortBlogs.map(blog =>
+      <Blog key={blog.id} blog={blog} updateBlog={updateBlog} deleteBlog={deleteBlog} user={user}/>
     )}
 
-    <h2>Tallenna uusi blogi</h2>
-    <form onSubmit={handleSaveBlog}> 
-      <div>Title:</div>
-      <input type="text" value={title} name="Title"
-        onChange={({ target }) => setTitle(target.value)}
-      />
-      <div>Author:</div>
-      <input type="text" value={author} name="Author"
-        onChange={({ target }) => setAuthor(target.value)}
-      />
-      <div>Url:</div>
-      <input type="text" value={url} name="Url"
-        onChange={({ target }) => setUrl(target.value)}
-      />
-      <button type="submit">Tallenna</button>
-    </form>
+    <Togglable buttonLabel='Lomake, jolla voit tallentaa uuden blogin'>
+        <SaveForm addBlog={addBlog} />
+    </Togglable>
+
   </div>
  ) 
 }
