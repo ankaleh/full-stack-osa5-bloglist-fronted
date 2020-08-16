@@ -21,18 +21,19 @@ const App = () => {
     try {
       const blog = await blogService.create(newBlog)
       setBlogs(blogs.concat(blog))
+      window.location.reload()
       setMessage(`Uusi blogi lisättiin: ${author}, ${title}.`)
       setTimeout(() => {
         setMessage(null)
       }, 5000)
-      window.location.reload()
+
     }  catch (exception) {
       setErrorMessage('Blogin lisääminen ei onnistunut. Yritä uudelleen.')
       setTimeout(() => {
         setErrorMessage(null)
       }, 5000)
       console.log('Virhe!')
-      
+
     }
   }
 
@@ -45,7 +46,7 @@ const App = () => {
         setMessage(null)
       }, 5000)
       window.location.reload()
-      
+
     }  catch (exception) {
       setErrorMessage('Blogin päivittäminen ei onnistunut. Yritä uudelleen.')
       setTimeout(() => {
@@ -56,26 +57,26 @@ const App = () => {
   }
 
   const deleteBlog = async (id) => {
-    if (window.confirm("Haluatko varmasti poistaa blogin?")) { 
-      
-    
-    try {
-      console.log(id)
-      await blogService.remove(id)
-      setMessage(`Blogin poistaminen onnistui!`)
-      setTimeout(() => {
-        setMessage(null)
-      }, 5000)
-      window.location.reload()
-    }  catch (exception) {
-      setErrorMessage('Blogin poistaminen ei onnistunut. Yritä uudelleen.')
-      setTimeout(() => {
-        setErrorMessage(null)
-      }, 5000)
-      console.log('Virhe!')
+    if (window.confirm('Haluatko varmasti poistaa blogin?')) {
+
+
+      try {
+        console.log(id)
+        await blogService.remove(id)
+        setMessage('Blogin poistaminen onnistui!')
+        setTimeout(() => {
+          setMessage(null)
+        }, 5000)
+        window.location.reload()
+      }  catch (exception) {
+        setErrorMessage('Blogin poistaminen ei onnistunut. Yritä uudelleen.')
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+        console.log('Virhe!')
+      }
     }
   }
-}
 
   const handleLogin = async (event) => {
     event.preventDefault()
@@ -107,7 +108,7 @@ const App = () => {
   useEffect(() => {
     blogService.getAll().then(blogs =>
       setBlogs( blogs )
-    )  
+    )
   }, [])
 
   useEffect(() => {
@@ -119,48 +120,46 @@ const App = () => {
     }
   }, [])
 
-if (user === null) {
-  console.log('Returnissa!')
+  const sortBlogs = blogs.sort((a, b) => b.likes - a.likes)
+
+  if (user === null) {
+    console.log('Returnissa!')
+
+    return (
+      <div>
+
+        <Notification message = {message} errorMessage={errorMessage}/>
+
+        <Togglable buttonLabel='Kirjautumislomake'>
+          <LoginForm kayttajatunnus={kayttajatunnus} salasanaHash={salasanaHash} setKayttajatunnus ={setKayttajatunnus} setSalasanaHash={setSalasanaHash} handleLogin={handleLogin} />
+        </Togglable>
+
+      </div>
+    )
+  }
+
 
   return (
     <div>
+      <p>{user.nimi} kirjautuneena palveluun.</p>
+      <button onClick={() => {
+        window.localStorage.removeItem('kirjautunutKayttaja')
+        window.location.reload()}}>
+      Kirjaudu ulos
+      </button>
 
       <Notification message = {message} errorMessage={errorMessage}/>
-    
-      <Togglable buttonLabel='Kirjautumislomake'>
-        <LoginForm kayttajatunnus={kayttajatunnus} salasanaHash={salasanaHash} setKayttajatunnus ={setKayttajatunnus} setSalasanaHash={setSalasanaHash} handleLogin={handleLogin} />
+
+      {sortBlogs.map(blog =>
+        <Blog key={blog.id} blog={blog} updateBlog={updateBlog} deleteBlog={deleteBlog} user={user}/>
+      )}
+
+      <Togglable buttonLabel='Lomake, jolla voit tallentaa uuden blogin'>
+        <SaveForm addBlog={addBlog} />
       </Togglable>
 
     </div>
   )
-}  
-
-const sortBlogs = blogs.sort((a, b) => b.likes - a.likes)
-
-
-return (
-  <div>
-    <p>{user.nimi} kirjautuneena palveluun.</p>
-    <button onClick={() => {
-      window.localStorage.removeItem('kirjautunutKayttaja')
-      window.location.reload()}}>
-      Kirjaudu ulos
-    </button>
-
-    <h2>Blogit</h2>
-
-    <Notification message = {message} errorMessage={errorMessage}/>
-    
-    {sortBlogs.map(blog =>
-      <Blog key={blog.id} blog={blog} updateBlog={updateBlog} deleteBlog={deleteBlog} user={user}/>
-    )}
-
-    <Togglable buttonLabel='Lomake, jolla voit tallentaa uuden blogin'>
-        <SaveForm addBlog={addBlog} />
-    </Togglable>
-
-  </div>
- ) 
 }
 
 export default App
