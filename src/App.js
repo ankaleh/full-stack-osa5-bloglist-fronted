@@ -20,8 +20,9 @@ const App = () => {
   const addBlog = async (newBlog, author, title) => {
     try {
       const blog = await blogService.create(newBlog)
+
       setBlogs(blogs.concat(blog))
-      window.location.reload()
+
       setMessage(`Uusi blogi lisättiin: ${author}, ${title}.`)
       setTimeout(() => {
         setMessage(null)
@@ -45,7 +46,10 @@ const App = () => {
       setTimeout(() => {
         setMessage(null)
       }, 5000)
-      window.location.reload()
+
+      setBlogs(
+        blogs.map(b => b.id !== id ? b : updatedBlog)
+      )
 
     }  catch (exception) {
       setErrorMessage('Blogin päivittäminen ei onnistunut. Yritä uudelleen.')
@@ -67,7 +71,11 @@ const App = () => {
         setTimeout(() => {
           setMessage(null)
         }, 5000)
-        window.location.reload()
+
+        setBlogs(
+          blogs.filter(b => b.id !== id)
+        )
+
       }  catch (exception) {
         setErrorMessage('Blogin poistaminen ei onnistunut. Yritä uudelleen.')
         setTimeout(() => {
